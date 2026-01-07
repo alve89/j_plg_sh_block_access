@@ -1,90 +1,94 @@
 <?xml version="1.0" encoding="utf-8"?>
-<extension version="4" type="plugin" group="system" method="upgrade">
-	<name>PLG_HRZ_BLOCK_ACCESS_NAME</name>
-	<author>Stefan Herzog</author>
-	<creationDate>October 2021</creationDate>
-	<copyright>This plugin is released under the GNU/GPL License</copyright>
-	<license>GNU General Public License</license>
-	<authorEmail>joomla@devel.stefan-herzog.com</authorEmail>
-	<authorUrl>https://github.com/alve89</authorUrl>
-	<version>1.1.11</version>
-	<description>PLG_HRZ_BLOCK_ACCESS_DESC</description>
-	
-	<targetplatform name="joomla" version="^[45]\.[0-9]+$"/>
+<extension type="plugin" group="system" method="upgrade" version="5.0">
+    <name>PLG_SH_BLOCK_ACCESS_NAME</name>
+    <author>Stefan Herzog</author>
+    <creationDate>January 2026</creationDate>
+    <copyright>This plugin is released under the GNU/GPL License</copyright>
+    <license>GNU General Public License</license>
+    <authorEmail>joomla@devel.stefan-herzog.com</authorEmail>
+    <authorUrl>https://github.com/alve89</authorUrl>
+    <version>2.0.0</version>
+    <description>PLG_SH_BLOCK_ACCESS_DESC</description>
 
-	<files>
-		<filename plugin="block_access">block_access.php</filename>
-		<filename>index.html</filename>
-	    	<folder>language</folder>
-  	</files>
-	<config>
-	    <fields name="params">
-	        <fieldset name="basic">
-		        <field name="securitykey"
-				type="password"
-				size="50"
-				default=""
-				placeholder="Your_Secret_Key"
-				label="PLG_HRZ_BLOCK_ACCESS_PASSWORD_LABEL"
-				description="PLG_HRZ_BLOCK_ACCESS_PASSWORD_DESC"
-				required="true" />
-	
-			<field name="securitykeyFrontend"
-				type="password"
-				size="50"
-				default=""
-				placeholder="Your_Secret_Key"
-				label="PLG_HRZ_BLOCK_ACCESS_PASSWORD_FRONTEND_LABEL"
-				description="PLG_HRZ_BLOCK_ACCESS_PASSWORD_FRONTEND_DESC" />
-	
-			<field name="area"
-				type="radio"
-				default="admin"
-				label="PLG_HRZ_BLOCK_ACCESS_AREA_TO_BLOCK_LABEL"
-				description="PLG_HRZ_BLOCK_ACCESS_AREA_TO_BLOCK_DESC">
-			  <option value="site">PLG_HRZ_BLOCK_ACCESS_AREA_TO_BLOCK_OPTION_SITE</option>
-			  <option value="admin">PLG_HRZ_BLOCK_ACCESS_AREA_TO_BLOCK_OPTION_ADMIN</option>
-			  <option value="all">PLG_HRZ_BLOCK_ACCESS_AREA_TO_BLOCK_OPTION_ALL</option>
-			</field>
-	
-			<field name="typeOfBlock"
-				type="radio"
-				default="message"
-				label="PLG_HRZ_BLOCK_ACCESS_TYPE_OF_BLOCK_LABEL"
-				description="PLG_HRZ_BLOCK_ACCESS_TYPE_OF_BLOCK_DESC">
-			  <option value="message">PLG_HRZ_BLOCK_ACCESS_401_MESSAGE</option>
-			  <option value="redirect">PLG_HRZ_BLOCK_ACCESS_301_REDIRECT</option>
-			</field>
-	
-			<field name="message"
-				 type="textarea"
-				 size="50"
-				 default="Hier hat niemand etwas zu suchen!"
-				 label="PLG_HRZ_BLOCK_ACCESS_401_MESSAGE_LABEL"
-				 description="PLG_HRZ_BLOCK_ACCESS_401_MESSAGE_DESC"
-				 showon="typeOfBlock:message" />
-	
-			 <field name="redirectUrl"
-				 type="url"
-				 size="50"
-				 placeholder="/path/relative/to/JoomlaRoot/"
-				 label="PLG_HRZ_BLOCK_ACCESS_REDIRECTURL_LABEL"
-				 description="PLG_HRZ_BLOCK_ACCESS_REDIRECTURL_DESC"
-				 showon="typeOfBlock:redirect" />
-		</fieldset>
-	    </fields>
-	</config>
+    <namespace path="src">Joomla\Plugin\System\BlockAccess</namespace>
 
-	<languages>
-		<language tag="de-DE">language/de-DE/de-DE.plg_system_block_access.ini</language>
-		<language tag="de-DE">language/de-DE/de-DE.plg_system_block_access.sys.ini</language>
-		<language tag="en-GB">language/en-GB/en-GB.plg_system_block_access.ini</language>
-		<language tag="en-GB">language/en-GB/en-GB.plg_system_block_access.sys.ini</language>
-		<language tag="nl-NL">language/nl-NL/nl-NL.plg_system_block_access.ini</language>
-		<language tag="nl-NL">language/nl-NL/nl-NL.plg_system_block_access.sys.ini</language>
-	</languages>
+    <files>
+        <folder plugin="block_access">services</folder>
+        <folder>src</folder>
+        <folder>language</folder>
+        <filename>index.html</filename>
+    </files>
 
-	<updateservers>
-		<server type="extension" name="PLG_HRZ_BLOCK_ACCESS_NAME">https://raw.githubusercontent.com/alve89/j_plg_hrz_block_access/master/updates.xml</server>
-	</updateservers>
+    <config>
+        <fields name="params">
+            <fieldset name="basic">
+                <field name="securitykey"
+                    type="password"
+                    size="50"
+                    default=""
+                    placeholder="Your_Secret_Key"
+                    label="PLG_SH_BLOCK_ACCESS_PASSWORD_LABEL"
+                    description="PLG_SH_BLOCK_ACCESS_PASSWORD_DESC"
+                    required="true" />
+
+                <field name="securitykeyFrontend"
+                    type="password"
+                    size="50"
+                    default=""
+                    placeholder="Your_Secret_Key"
+                    label="PLG_SH_BLOCK_ACCESS_PASSWORD_FRONTEND_LABEL"
+                    description="PLG_SH_BLOCK_ACCESS_PASSWORD_FRONTEND_DESC" />
+
+                <field name="area"
+                    type="list"
+                    label="PLG_SH_BLOCK_ACCESS_AREA_TO_BLOCK_LABEL"
+                    description="PLG_SH_BLOCK_ACCESS_AREA_TO_BLOCK_DESC"
+                    default="admin">
+                    <option value="site">PLG_SH_BLOCK_ACCESS_AREA_TO_BLOCK_OPTION_SITE</option>
+                    <option value="admin">PLG_SH_BLOCK_ACCESS_AREA_TO_BLOCK_OPTION_ADMIN</option>
+                    <option value="all">PLG_SH_BLOCK_ACCESS_AREA_TO_BLOCK_OPTION_ALL</option>
+                </field>
+
+                <field name="typeOfBlock"
+                    type="radio"
+                    label="PLG_SH_BLOCK_ACCESS_TYPE_OF_BLOCK_LABEL"
+                    description="PLG_SH_BLOCK_ACCESS_TYPE_OF_BLOCK_DESC"
+                    class="btn-group btn-group-yesno"
+                    default="redirect">
+                    <option value="redirect">PLG_SH_BLOCK_ACCESS_TYPE_OF_BLOCK_REDIRECT</option>
+                    <option value="message">PLG_SH_BLOCK_ACCESS_TYPE_OF_BLOCK_MESSAGE</option>
+                </field>
+
+                <field name="message"
+                    type="textarea"
+                    rows="3"
+                    cols="30"
+                    default="401 Unauthorized"
+                    label="PLG_SH_BLOCK_ACCESS_401_MESSAGE_LABEL"
+                    description="PLG_SH_BLOCK_ACCESS_401_MESSAGE_DESC"
+                    showon="typeOfBlock:message" />
+
+                <field name="redirectUrl"
+                    type="url"
+                    size="50"
+                    placeholder="/path/relative/to/JoomlaRoot/"
+                    label="PLG_SH_BLOCK_ACCESS_REDIRECTURL_LABEL"
+                    description="PLG_SH_BLOCK_ACCESS_REDIRECTURL_DESC"
+                    showon="typeOfBlock:redirect" />
+            </fieldset>
+        </fields>
+    </config>
+
+    <languages>
+        <language tag="de-DE">language/de-DE/de-DE.plg_system_block_access.ini</language>
+        <language tag="de-DE">language/de-DE/de-DE.plg_system_block_access.sys.ini</language>
+        <language tag="en-GB">language/en-GB/en-GB.plg_system_block_access.ini</language>
+        <language tag="en-GB">language/en-GB/en-GB.plg_system_block_access.sys.ini</language>
+        <language tag="nl-NL">language/nl-NL/nl-NL.plg_system_block_access.ini</language>
+        <language tag="nl-NL">language/nl-NL/nl-NL.plg_system_block_access.sys.ini</language>
+    </languages>
+
+    <updateservers>
+        <server type="extension" name="PLG_SH_BLOCK_ACCESS_NAME">https://raw.githubusercontent.com/alve89/j_plg_sh_block_access/master/updates.xml</server>
+    </updateservers>
 </extension>
