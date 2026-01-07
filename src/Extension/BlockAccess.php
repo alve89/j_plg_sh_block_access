@@ -108,17 +108,12 @@ final class BlockAccess extends CMSPlugin
 
     private function blockArea(): void
     {
-        $app = $this->getApplication();
         $type = (string) $this->params->get('typeOfBlock', 'redirect');
 
         if ($type === 'message')
         {
-            // Send 401 and show a simple message
-            $app->setHeader('status', '401 Unauthorized', true);
-            $app->sendHeaders();
+            throw new \Exception((string) $this->params->get('message', 'Unauthorized'), 401);
 
-            echo (string) $this->params->get('message', 'Unauthorized');
-            $app->close();
         }
 
         // Default: redirect
