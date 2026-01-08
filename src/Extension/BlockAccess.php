@@ -17,145 +17,263 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\CMS\Uri\Uri;
 
-use Joomla\CMS\Exception\ExceptionHandler;
-use Joomla\CMS\Exception\HttpException;
-
-/**
- * System plugin to block access to site/admin unless a URL key is provided once per session.
- *
- * The "securitykey" (and optional "securitykeyFrontend") parameters define the **URL parameter name**
- * that must be present, e.g. /administrator/?MY_SECRET_KEY
- */
 final class BlockAccess extends CMSPlugin
 {
-    /**
-     * Load the language file on instantiation.
-     *
-     * @var bool
-     */
     protected $autoloadLanguage = true;
+
+    private const BA_THROW_TTL = 30; // Sekunden
 
     private string $securedArea = '';
     private bool $correctKey = false;
     private ?Uri $currentUri = null;
     private ?Uri $redirectUri = null;
 
-    /**
-     * Event: After initialise
-     */
-    public function onAfterInitialise(): void
+    /* ---------------------------------------------------------------------
+     * Logout: NACH erfolgreichem Backend-Logout ins Frontend
+     * ------------------------------------------------------------------- */
+    public function onUserAfterLogout($user, $options = []): void
     {
-        $app = $this->getApplication();
+        $app = Factory::getApplication();
 
-        // If plugin is not configured, or the user already provided the correct key in this session, do nothing.
-        $session = Factory::getSession();
-
-        $generalKeyParamName = (string) $this->params->get('securitykey', '');
-
-        if ($generalKeyParamName === '' || $session->get('block_access', false))
+        if (!$app->isClient('administrator'))
         {
             return;
         }
 
-        $this->currentUri = Uri::getInstance();
+        $app->redirect(Uri::root(), 303);
+        $app->close();
+    }
 
+    /* ---------------------------------------------------------------------
+     * Hauptlogik
+     * ------------------------------------------------------------------- */
+    public function onAfterInitialise(): void
+    {
+        $app     = Factory::getApplication();
+        $session = Factory::getSession();
+        $input   = $app->getInput();
+
+        /* -------------------------------------------------------------
+         * 1) Admin-Logout: niemals blockieren
+         * ----------------------------------------------------------- */
+        if ($app->isClient('administrator'))
+        {
+            $option = (string) $input->getCmd('option', '');
+            $task   = (string) $input->getCmd('task', '');
+
+            $this->debugLog($app, $option, $task);
+
+            if ($option === 'com_login' && $task === 'logout')
+            {
+                $session->clear('block_access');
+                return;
+            }
+        }
+
+        /* -------------------------------------------------------------
+         * 2) Frontend: ba_throw validieren und ggf. Exception werfen
+         * ----------------------------------------------------------- */
+        if ($app->isClient('site'))
+        {
+            $this->handleFrontendThrow($input);
+        }
+
+        /* -------------------------------------------------------------
+         * 3) Plugin nicht aktiv oder bereits freigeschaltet
+         * ----------------------------------------------------------- */
+        $generalKey = (string) $this->params->get('securitykey', '');
+
+        if ($generalKey === '' || (bool) $session->get('block_access', false))
+        {
+            return;
+        }
+
+        /* -------------------------------------------------------------
+         * 4) Kontext bestimmen
+         * ----------------------------------------------------------- */
+        $this->currentUri  = Uri::getInstance();
         $this->securedArea = strtolower((string) $this->params->get('area', 'all'));
 
-        $input = $app->getInput();
-
-        // Determine current client and which key param name to check
         if ($app->isClient('site'))
         {
             $area = 'site';
-
-            $frontendKeyParamName = (string) $this->params->get('securitykeyFrontend', '');
-
-            if ($frontendKeyParamName !== '')
-            {
-                $this->correctKey = $input->get($frontendKeyParamName, null) !== null;
-            }
-            else
-            {
-                $this->correctKey = $input->get($generalKeyParamName, null) !== null;
-            }
-        }
-        elseif ($app->isClient('administrator'))
-        {
-            $area = 'admin';
-            $this->correctKey = $input->get($generalKeyParamName, null) !== null;
+            $frontendKey = (string) $this->params->get('securitykeyFrontend', '');
+            $keyName = $frontendKey !== '' ? $frontendKey : $generalKey;
+            $this->correctKey = $input->get($keyName) !== null;
         }
         else
         {
-            $area = 'all';
-            $this->correctKey = $input->get($generalKeyParamName, null) !== null;
+            $area = 'admin';
+            $this->correctKey = $input->get($generalKey) !== null;
         }
 
-        // Only act if this area should be secured
-        if ($area !== $this->securedArea && $this->securedArea !== 'all')
+        /* -------------------------------------------------------------
+         * 5) Falscher Bereich → nichts tun
+         * ----------------------------------------------------------- */
+        if ($this->securedArea !== 'all' && $area !== $this->securedArea)
         {
             return;
         }
 
-        // If correct key provided, remember it for the session and allow access
+        /* -------------------------------------------------------------
+         * 6) Key korrekt → Session freischalten
+         * ----------------------------------------------------------- */
         if ($this->correctKey)
         {
             $session->set('block_access', true);
-
             return;
         }
 
-        // Otherwise block access
+        /* -------------------------------------------------------------
+         * 7) Blockieren
+         * ----------------------------------------------------------- */
         $this->setRedirectUri();
-        $this->blockArea();
+        $this->blockArea($area);
     }
 
-    private function blockArea(): void
+    /* ---------------------------------------------------------------------
+     * Frontend ba_throw
+     * ------------------------------------------------------------------- */
+    private function handleFrontendThrow($input): void
     {
-        $app = $this->getApplication();
+        if ((int) $input->getInt('ba_throw', 0) !== 1)
+        {
+            return;
+        }
+
+        $msg   = (string) $input->getString('ba_msg', (string) $this->params->get('message', 'Unauthorized'));
+        $code  = (int) $input->getInt('ba_code', 401);
+        $ts    = (int) $input->getInt('ba_ts', 0);
+        $nonce = (string) $input->getString('ba_n', '');
+        $sig   = (string) $input->getString('ba_sig', '');
+
+        if ($ts <= 0 || $nonce === '' || $sig === '')
+        {
+            return;
+        }
+
+        if (abs(time() - $ts) > self::BA_THROW_TTL)
+        {
+            return;
+        }
+
+        $secret  = (string) Factory::getConfig()->get('secret');
+        $payload = $code . '|' . $msg . '|' . $ts . '|' . $nonce;
+        $expected = hash_hmac('sha256', $payload, $secret);
+
+        if (!hash_equals($expected, $sig))
+        {
+            return;
+        }
+
+        throw new \Exception($msg, $code);
+    }
+
+    /* ---------------------------------------------------------------------
+     * Blockieren
+     * ------------------------------------------------------------------- */
+    private function blockArea(string $area): void
+    {
+        $app  = Factory::getApplication();
         $type = (string) $this->params->get('typeOfBlock', 'redirect');
 
-        if ($type === 'message')
+        if (!$this->redirectUri instanceof Uri)
         {
-            throw new HttpException(
+            return;
+        }
+
+        if ($this->currentUri && $this->currentUri->toString() === $this->redirectUri->toString())
+        {
+            return;
+        }
+
+        if ($type !== 'message')
+        {
+            $app->redirect($this->redirectUri->toString(), 303);
+            return;
+        }
+
+        if ($app->isClient('site'))
+        {
+            throw new \Exception(
                 (string) $this->params->get('message', 'Unauthorized'),
                 401
             );
         }
 
-        // Default: redirect
-        if ($this->redirectUri instanceof Uri)
-        {
-            // Avoid redirect loops
-            if ($this->currentUri instanceof Uri && $this->currentUri->toString() === $this->redirectUri->toString())
-            {
-                return;
-            }
-
-            $app->redirect($this->redirectUri->toString(), 401);
-        }
+        $this->redirectWithThrow();
     }
 
+    /* ---------------------------------------------------------------------
+     * Admin → Frontend Redirect mit ba_throw
+     * ------------------------------------------------------------------- */
+    private function redirectWithThrow(): void
+    {
+        $app = Factory::getApplication();
+
+        $msg   = (string) $this->params->get('message', 'Unauthorized');
+        $code  = 401;
+        $ts    = time();
+        $nonce = bin2hex(random_bytes(16));
+
+        $secret  = (string) Factory::getConfig()->get('secret');
+        $payload = $code . '|' . $msg . '|' . $ts . '|' . $nonce;
+        $sig     = hash_hmac('sha256', $payload, $secret);
+
+        $target = $this->redirectUri->toString();
+        $sep    = str_contains($target, '?') ? '&' : '?';
+
+        $target .= $sep
+            . 'ba_throw=1'
+            . '&ba_code=' . $code
+            . '&ba_msg=' . rawurlencode($msg)
+            . '&ba_ts=' . $ts
+            . '&ba_n=' . $nonce
+            . '&ba_sig=' . $sig;
+
+        $app->redirect($target, 303);
+    }
+
+    /* ---------------------------------------------------------------------
+     * Redirect-URL bestimmen
+     * ------------------------------------------------------------------- */
     private function setRedirectUri(): void
     {
         $redirect = trim((string) $this->params->get('redirectUrl', ''));
 
-        // If a valid absolute URL was set, use it
-        if (str_starts_with($redirect, 'http://') || str_starts_with($redirect, 'https://'))
+        if ($redirect !== '' && preg_match('#^https?://#', $redirect))
         {
             $this->redirectUri = Uri::getInstance($redirect);
-
             return;
         }
 
-        // If a relative path was set, use it (relative to Joomla root)
         if ($redirect !== '' && str_starts_with($redirect, '/'))
         {
             $this->redirectUri = Uri::getInstance(Uri::root() . ltrim($redirect, '/'));
-
             return;
         }
 
-        // Otherwise use Joomla root
         $this->redirectUri = Uri::getInstance(Uri::root());
+    }
+
+    /* ---------------------------------------------------------------------
+     * Debug-Logging (optional)
+     * ------------------------------------------------------------------- */
+    private function debugLog($app, string $option, string $task): void
+    {
+
+        if (!$this->params->get('debug', 0))
+        {
+            return;
+        }
+        
+        $line = date('Y-m-d H:i:s')
+            . ' client=' . ($app->isClient('administrator') ? 'admin' : 'site')
+            . ' uri=' . Uri::getInstance()->toString()
+            . ' option=' . $option
+            . ' task=' . $task
+            . PHP_EOL;
+
+        file_put_contents(__DIR__ . '/task.log', $line, FILE_APPEND | LOCK_EX);
     }
 }
