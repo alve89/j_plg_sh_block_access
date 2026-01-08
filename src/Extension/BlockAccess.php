@@ -17,6 +17,9 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\CMS\Uri\Uri;
 
+use Joomla\CMS\Exception\ExceptionHandler;
+use Joomla\CMS\Exception\HttpException;
+
 /**
  * System plugin to block access to site/admin unless a URL key is provided once per session.
  *
@@ -108,12 +111,15 @@ final class BlockAccess extends CMSPlugin
 
     private function blockArea(): void
     {
+        $app = $this->getApplication();
         $type = (string) $this->params->get('typeOfBlock', 'redirect');
 
         if ($type === 'message')
         {
-            throw new \Exception((string) $this->params->get('message', 'Unauthorized'), 401);
-
+            throw new HttpException(
+                (string) $this->params->get('message', 'Unauthorized'),
+                401
+            );
         }
 
         // Default: redirect
