@@ -1,28 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <updates>
     <update>
-        <name>System - Block Access</name>
-        <description></description>
+        <name>PLG_SH_BLOCK_ACCESS_NAME</name>
+        <description>PLG_SH_BLOCK_ACCESS_DESC</description>
         <element>block_access</element>
         <type>plugin</type>
         <folder>system</folder>
-        <client>0</client>
-        <version>2.0.0</version>
+        <client>site</client>
+        <version>2.1.1</version>
 
         <changelogurl>https://raw.githubusercontent.com/alve89/j_plg_sh_block_access/master/changelog.xml</changelogurl>
-        
-        <infourl title="Release notes">https://github.com/alve89/j_plg_sh_block_access/releases/tag/v2.0.0</infourl>
-        
+
+        <infourl title="Release notes">https://github.com/alve89/j_plg_sh_block_access/releases/tag/v2.1.1</infourl>
+
         <downloads>
-            <downloadurl type="full" format="zip">https://github.com/alve89/plg_block_access/archive/v2.0.0.zip</downloadurl>
+            <downloadurl
+                type="full"
+                format="zip">
+                https://github.com/alve89/j_plg_sh_block_access/archive/refs/tags/v2.1.1.zip
+            </downloadurl>
         </downloads>
         <tags>
             <tag>stable</tag>
         </tags>
         <maintainer>Stefan Herzog</maintainer>
         <maintainerurl>https://github.com/alve89</maintainerurl>
-        <targetplatform name="joomla" version="[4].[0-9]" />
-        <targetplatform name="joomla" version="[5].[0-9]" />
-        <targetplatform name="joomla" version="[6].[0-9]" />
+        <targetplatform name="joomla" version="(4\.[2-9])|(5\.\d+)|(6\.\d+)" />
+        <php_minimum>7.2.5</php_minimum>
     </update>
 </updates>

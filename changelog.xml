@@ -1,10 +1,25 @@
 <changelogs>
     <changelog>
-        <element>plg_hrz_block_access</element>
+        <element>block_access</element>
+        <type>plugin</type>
+        <version>2.1.1</version>
+        <change>
+            <item>SECURITY: fixed the redirect-mode loop guard leaving the redirect target (the site root by default, when redirectUrl is left empty) completely unprotected instead of blocking it</item>
+            <item>SECURITY: the security key is now read from GET/POST only, no longer from the generic request bag, so a same-named cookie can no longer be used to unlock access</item>
+            <item>SECURITY: session unlock is now a SHA-256 hash of the effective key instead of a plain flag, so changing the configured key invalidates existing unlocked sessions</item>
+            <item>Administrator logout no longer redirects to the frontend unless the administrator area is actually protected</item>
+            <item>New option: optionally block the Web Services API (/api) as well</item>
+            <item>New option: always-allowed IP addresses / CIDR ranges that bypass the plugin entirely</item>
+            <item>Fixed a duplicate "language" folder declaration in the manifest</item>
+            <item>Dropped the legacy Joomla 3 plugin class (block_access.php); this line now targets Joomla 4.2 - 6.x only</item>
+        </change>
+    </changelog>
+    <changelog>
+        <element>block_access</element>
         <type>plugin</type>
         <version>1.1.10</version>
         <change>
             <item>Set compatibility to Joomla! 4.4</item>
         </change>
-      </changelog>
+    </changelog>
 </changelogs>

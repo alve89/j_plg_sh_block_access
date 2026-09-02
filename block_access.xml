@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<extension type="plugin" group="system" method="upgrade" version="5.0">
+<extension type="plugin" group="system" method="upgrade">
     <name>PLG_SH_BLOCK_ACCESS_NAME</name>
     <author>Stefan Herzog</author>
-    <creationDate>January 2026</creationDate>
+    <creationDate>August 2026</creationDate>
     <copyright>This plugin is released under the GNU/GPL License</copyright>
-    <license>GNU General Public License</license>
+    <license>GNU General Public License version 3 or later; see LICENSE.txt</license>
     <authorEmail>joomla@devel.stefan-herzog.com</authorEmail>
     <authorUrl>https://github.com/alve89</authorUrl>
-    <version>2.0.0</version>
+    <version>2.1.1</version>
     <description>PLG_SH_BLOCK_ACCESS_DESC</description>
 
     <namespace path="src">Joomla\Plugin\System\BlockAccess</namespace>
@@ -15,9 +15,12 @@
     <files>
         <folder plugin="block_access">services</folder>
         <folder>src</folder>
-        <folder>language</folder>
         <filename>index.html</filename>
+        <filename>LICENSE.txt</filename>
+        <filename>README.md</filename>
     </files>
+
+    <scriptfile>script.php</scriptfile>
 
     <config>
         <fields name="params">
@@ -69,23 +72,48 @@
                     showon="typeOfBlock:message" />
 
                 <field name="redirectUrl"
-                    type="url"
+                    type="text"
                     size="50"
                     placeholder="/path/relative/to/JoomlaRoot/"
                     label="PLG_SH_BLOCK_ACCESS_REDIRECTURL_LABEL"
                     description="PLG_SH_BLOCK_ACCESS_REDIRECTURL_DESC"
                     showon="typeOfBlock:redirect" />
             </fieldset>
+
+            <fieldset name="hardening" label="PLG_SH_BLOCK_ACCESS_FIELDSET_HARDENING_LABEL">
+
+                <field
+                    name="blockApi"
+                    type="radio"
+                    default="0"
+                    label="PLG_SH_BLOCK_ACCESS_FIELD_BLOCKAPI_LABEL"
+                    description="PLG_SH_BLOCK_ACCESS_FIELD_BLOCKAPI_DESC"
+                    class="btn-group btn-group-yesno">
+                        <option value="1">JYES</option>
+                        <option value="0">JNO</option>
+                </field>
+
+                <field
+                    name="allowedIPs"
+                    type="textarea"
+                    rows="4"
+                    cols="40"
+                    placeholder="203.0.113.4&#10;198.51.100.0/24"
+                    label="PLG_SH_BLOCK_ACCESS_FIELD_ALLOWEDIPS_LABEL"
+                    description="PLG_SH_BLOCK_ACCESS_FIELD_ALLOWEDIPS_DESC"
+                    />
+
+            </fieldset>
         </fields>
     </config>
 
-    <languages>
-        <language tag="de-DE">language/de-DE/de-DE.plg_system_block_access.ini</language>
-        <language tag="de-DE">language/de-DE/de-DE.plg_system_block_access.sys.ini</language>
-        <language tag="en-GB">language/en-GB/en-GB.plg_system_block_access.ini</language>
-        <language tag="en-GB">language/en-GB/en-GB.plg_system_block_access.sys.ini</language>
-        <language tag="nl-NL">language/nl-NL/nl-NL.plg_system_block_access.ini</language>
-        <language tag="nl-NL">language/nl-NL/nl-NL.plg_system_block_access.sys.ini</language>
+    <languages folder="language">
+        <language tag="de-DE">de-DE/de-DE.plg_system_block_access.ini</language>
+        <language tag="de-DE">de-DE/de-DE.plg_system_block_access.sys.ini</language>
+        <language tag="en-GB">en-GB/en-GB.plg_system_block_access.ini</language>
+        <language tag="en-GB">en-GB/en-GB.plg_system_block_access.sys.ini</language>
+        <language tag="nl-NL">nl-NL/nl-NL.plg_system_block_access.ini</language>
+        <language tag="nl-NL">nl-NL/nl-NL.plg_system_block_access.sys.ini</language>
     </languages>
 
     <updateservers>
